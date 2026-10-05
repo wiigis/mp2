@@ -73,7 +73,7 @@ function App() {
     <div className="app">
 
       <header className="header">
-        <h1>Pokémon Directory</h1>
+        <h1>Pokémon!</h1>
 
         <nav>
           <Link to="/gallery" className="nav-button">
