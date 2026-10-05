@@ -1,121 +1,221 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
+import { Link, Route, Routes } from 'react-router-dom'
+import PokemonDetail from './PokemonDetail'
+import GalleryPage from './GalleryPage'
 import './App.css'
 
+type Pokemon = {
+  id: number
+  name: string
+  type: string
+  height: number
+  weight: number
+  image: string
+}
+
+type SortOption = 'name' | 'id' | 'type' | 'height' | 'weight'
+
 function App() {
-  const [count, setCount] = useState(0)
+
+  // allowing program to remember info inserted by user
+  // rerenders application based on new user info
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+
+  // for pokemon data from api (pokemon object)
+  const [pokemon, setPokemon] = useState<Pokemon[]>([])
+
+  useEffect(() => {
+    fetch('https://pokeapi.co/api/v2/pokemon?limit=151')
+      .then((response) => response.json())
+      .then((data) => {
+        const pokemonRequests = data.results.map(
+          (item: { url: string }) =>
+            fetch(item.url).then((response) => response.json())
+        )
+
+        Promise.all(pokemonRequests)
+          .then((pokemonData) => {
+            const formattedPokemon = pokemonData.map((item) => ({
+              id: item.id,
+              name: item.name,
+              type: item.types.map((typeInfo: { type: { name: string } }) =>typeInfo.type.name).join(', '),
+              height: item.height,
+              weight: item.weight,
+              image:
+                item.sprites.other['official-artwork'].front_default
+            }))
+
+            setPokemon(formattedPokemon)
+          })
+      })
+  }, [])
+
+  const filteredPokemon = pokemon
+    .filter((item) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      let comparison = 0
+
+      // sorting either by name or id/height/weight
+      if (sortBy === 'name' || sortBy === 'type') {
+        comparison = a[sortBy].localeCompare(b[sortBy])
+      } else {
+        comparison = a[sortBy] - b[sortBy]
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app">
 
-      <div className="ticks"></div>
+      <header className="header">
+        <h1>Pokémon Directory</h1>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <nav>
+          <Link to="/gallery" className="nav-button">
+            Gallery
+          </Link>
+        </nav>
+      </header>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <main className="main-content">
+
+        <Routes>
+
+          <Route
+            path="/"
+            element={
+              <>
+                {/* search box */}
+                <section className="search-panel" id="search">
+
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Search for Pokémon..."
+                    value={searchQuery} // connects input to react state
+                    // updating state based on whatever user types
+                    onChange={(event) =>
+                      setSearchQuery(event.target.value)
+                    }
+                  />
+
+                  {/* sort dropdown */}
+                  <div className="sort-section">
+
+                    <label htmlFor="sort">Sort by:</label>
+
+                    {/* creating actual dropdown feature with select */}
+                    <select
+                      id="sort"
+                      value={sortBy}
+                      onChange={(event) =>
+                        setSortBy(event.target.value as SortOption)
+                      }
+                    >
+                      <option value="name">Name</option>
+                      <option value="id">Pokédex Number</option>
+                      <option value="type">Type</option>
+                      <option value="height">Height</option>
+                      <option value="weight">Weight</option>
+                    </select>
+
+                  </div>
+
+                  <div className="order-section">
+
+                    <label>
+                      <input
+                        type="radio"
+                        name="sortOrder"
+                        checked={sortOrder === 'asc'}
+                        onChange={() => setSortOrder('asc')}
+                      />
+                      Ascending
+                    </label>
+
+                    <label>
+                      <input
+                        type="radio"
+                        name="sortOrder"
+                        checked={sortOrder === 'desc'}
+                        onChange={() => setSortOrder('desc')}
+                      />
+                      Descending
+                    </label>
+
+                  </div>
+
+                </section>
+
+                <section className="results">
+
+                  {filteredPokemon.length > 0 ? (
+
+                    filteredPokemon.map((item) => (
+
+                      <Link
+                        to={`/pokemon/${item.id}`}
+                        className="pokemon-card-link"
+                        key={item.id}
+                      >
+
+                        <article className="pokemon-card">
+
+                          <div className="pokemon-number">
+                            #{item.id.toString().padStart(4, '0')}
+                          </div>
+
+                          <div className="pokemon-info">
+
+                            <h2>{item.name}</h2>
+
+                            <p>
+                              Type: {item.type} | Height: {item.height} | Weight: {item.weight}
+                            </p>
+
+                          </div>
+
+                        </article>
+
+                      </Link>
+                  ))
+
+                  ) : (
+
+                    <div className="empty-results">
+
+                      <h2>No Pokémon to display</h2>
+
+
+                    </div>
+
+                  )}
+
+                </section>
+              </>
+            }
+          />
+
+          <Route
+            path="/gallery"
+            element={<GalleryPage pokemon={pokemon} />}
+          />
+
+          <Route
+            path="/pokemon/:id"
+            element={<PokemonDetail pokemon={pokemon} />}
+          />
+
+        </Routes>
+
+      </main>
+
+    </div>
   )
 }
 
