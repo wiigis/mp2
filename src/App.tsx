@@ -160,6 +160,7 @@ function App() {
 
                       <Link
                         to={`/pokemon/${item.id}`}
+                        state={{ from: '/' }}
                         className="pokemon-card-link"
                         key={item.id}
                       >

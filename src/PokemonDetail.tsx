@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 
 type Pokemon = {
   id: number
@@ -16,6 +16,9 @@ type PokemonDetailProps = {
 function PokemonDetail({ pokemon }: PokemonDetailProps) {
 
   const { id } = useParams()
+  const location = useLocation()
+  const backRoute = location.state?.from === '/gallery'? '/gallery' : '/'
+  
 
   // finding specific pokemon based on their pokedex #
   // attached to url
@@ -30,7 +33,7 @@ function PokemonDetail({ pokemon }: PokemonDetailProps) {
       <div className="detail-message">
         <h2>Pokémon not found</h2>
 
-        <Link to="/" className="back-link">
+        <Link to={backRoute} className="back-link">
           ← Back
         </Link>
       </div>
@@ -50,7 +53,7 @@ function PokemonDetail({ pokemon }: PokemonDetailProps) {
   return (
     <section className="detail-view">
 
-      <Link to="/" className="back-link">
+      <Link to={backRoute} className="back-link">
         ← Back
       </Link>
 
@@ -101,6 +104,7 @@ function PokemonDetail({ pokemon }: PokemonDetailProps) {
 
         <Link
           to={`/pokemon/${previousPokemon.id}`}
+          state={{ from: backRoute }}
           className="detail-nav-button"
         >
           ← Previous
@@ -108,6 +112,7 @@ function PokemonDetail({ pokemon }: PokemonDetailProps) {
 
         <Link
           to={`/pokemon/${nextPokemon.id}`}
+          state={{ from: backRoute }}
           className="detail-nav-button"
         >
           Next →

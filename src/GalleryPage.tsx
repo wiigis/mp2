@@ -107,6 +107,7 @@ function GalleryPage({ pokemon }: GalleryPageProps) {
 
             <Link
                 to={`/pokemon/${item.id}`}
+                state={{ from: '/gallery' }}
                 className="gallery-card-link"
                 key={item.id}
             >
